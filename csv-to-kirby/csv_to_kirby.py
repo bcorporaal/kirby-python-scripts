@@ -1,89 +1,88 @@
-import csv
-import datetime
 import re
 import os
+import json
+import csv
+import datetime
 
 print('### START ###')
 
-# TO DO
-# - option to change variables from the command line
-# - use date from csv file or set date automatically
-
-# variables
-contentFile  = open('test_content.csv')
-refDate     = datetime.datetime(2017, 11, 13, 15, 00, 0)
-counter     = 0
-baseFolder  = 'content'
-contentFilename = 'data'
-entryNameField = 0
-
-# Array of interval between posts in days
-# [1] = one post a day
-# [2] = every other day
-# [1,4,2] = one post, a post the next day, one 4 days later, a post two days later, a post the next day, 4 days later, etc.
-postInterval = [3,4]
-
+# base
 dateFormat  = '%Y-%m-%d'
 timeFormat  = '%H:%M'
+maxFolderNameLength = 20
 
-contentReader = csv.reader(contentFile)
+# read settings file
+settingsFilename = "settings.json"
+
+with open(settingsFilename) as settingsFile:    
+    settings = json.load(settingsFile)
+
+
+postDate = datetime.datetime.strptime(settings["startDate"], dateFormat+' '+timeFormat)
+startID = settings["startID"]
+
+print('- Open the input file')
+inputFile  = open(settings["inputFilename"])
+inputReader = csv.reader(inputFile)
 
 # create the content folder
 # increment the counter until the foldername does not exist yet
 # pretty clumsy way of doing this, but it works
-actualFolder = baseFolder
+print('- Make content folder')
+actualFolder = settings["baseFolder"]
+counter      = 0
 while os.path.exists(actualFolder) == True:
     counter = counter + 1
-    actualFolder = baseFolder + '-' + str(counter)
+    actualFolder = settings["baseFolder"] + '-' + str(counter)
 
-print('- Make content folder')
 os.makedirs(actualFolder)
 os.chdir(actualFolder)
 
 print('- Get header row fields')
-fields = next(contentReader)
+headerFields = next(inputReader)
 
 print('- Start with rows')
-for row in contentReader:
+for row in inputReader:
 
     # set the name for this entry
-    folderName = str(contentReader.line_num - 1)+'-'+re.sub('[^\w\-_]', '-', row[entryNameField]).lower()
+    baseFolderName = row[settings["fieldForSlug"]][0:maxFolderNameLength]
+    folderName = str(inputReader.line_num + startID - 2)+'-'+re.sub('[^\w\-_]', '-', baseFolderName).lower()
 
     # make the folder and go there
     os.makedirs(folderName)
     os.chdir(folderName)
 
-    # create a text file
-    contentFile = open(contentFilename+'.txt', 'w')
+    # create the output file
+    outputFile = open(settings["outputFilename"], 'w')
 
     # write the content
     i = 0
     for contentSection in row:
         
-        # rewrite booleans to 0 and 1
+        # rewrite booleans to 0 and 1 because that is what Kirby does standard
         if contentSection == 'TRUE':
             contentSection = '1'
         elif contentSection == 'FALSE':
             contentSection = '0'
 
         # write content
-        contentFile.write(fields[i]+':\n'+contentSection)
-        contentFile.write('\n\n----\n\n')
+        outputFile.write(headerFields[i]+':\n'+contentSection)
+        outputFile.write('\n\n----\n\n')
 
         i += 1
 
     # add date and time
-    contentFile.write('Date: '+refDate.strftime(dateFormat))
-    contentFile.write('\n\n----\n\n')
-    contentFile.write('Time: '+refDate.strftime(timeFormat))
+    outputFile.write('Date: '+postDate.strftime(dateFormat))
+    outputFile.write('\n\n----\n\n')
+    outputFile.write('Time: '+postDate.strftime(timeFormat))
 
     # go back up one level to create a new folder
     os.chdir('..')
 
-    # increase the date
-    nrDays = postInterval.pop(0)
-    postInterval.append(nrDays)
-    refDate += datetime.timedelta(days=nrDays)
+    # increase the date while looping through the intervals
+    nrDays = settings["postInterval"].pop(0)
+    settings["postInterval"].append(nrDays)
+    postDate += datetime.timedelta(days=nrDays)
 
 print('- Done with the rows')
 print('### FINISHED ###')
