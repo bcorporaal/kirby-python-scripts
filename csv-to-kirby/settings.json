@@ -1,0 +1,9 @@
+{
+	"inputFilename": "test_content.csv",
+	"outputFilename": "data.txt",
+	"baseFolder": "content",
+	"startID": 20,
+	"startDate": "2017-11-10 14:45",
+	"postInterval":[1,2,3],
+	"fieldForSlug":0
+}
