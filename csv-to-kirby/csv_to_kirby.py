@@ -5,19 +5,33 @@ import os
 
 print('### START ###')
 
-linkFile = open('links.csv')
-linkReader = csv.reader(linkFile)
+# TO DO
+# - option to change variables from the command line
+# - use date from csv file or set date automatically
 
-refDate     = datetime.datetime(2017, 2, 5, 10, 20, 0)
+# variables
+contentFile  = open('test_content.csv')
+refDate     = datetime.datetime(2017, 11, 13, 15, 00, 0)
+counter     = 0
+baseFolder  = 'content'
+contentFilename = 'data'
+entryNameField = 0
+
+# Array of interval between posts in days
+# [1] = one post a day
+# [2] = every other day
+# [1,4,2] = one post, a post the next day, one 4 days later, a post two days later, a post the next day, 4 days later, etc.
+postInterval = [3,4]
+
 dateFormat  = '%Y-%m-%d'
 timeFormat  = '%H:%M'
 
-baseFolder = 'content'
-actualFolder = baseFolder
-counter = 0
+contentReader = csv.reader(contentFile)
 
+# create the content folder
 # increment the counter until the foldername does not exist yet
 # pretty clumsy way of doing this, but it works
+actualFolder = baseFolder
 while os.path.exists(actualFolder) == True:
     counter = counter + 1
     actualFolder = baseFolder + '-' + str(counter)
@@ -26,50 +40,50 @@ print('- Make content folder')
 os.makedirs(actualFolder)
 os.chdir(actualFolder)
 
+print('- Get header row fields')
+fields = next(contentReader)
+
 print('- Start with rows')
+for row in contentReader:
 
-for row in linkReader:
-    if linkReader.line_num == 1:
-               continue    # skip first row
-    link = {}
-    link['title']       = row[0]
-    link['url']         = row[1]
-    link['description'] = row[2]
-    link['favorite']    = '1' if row[3].lower() == 'true' else '0'
-    link['category']    = row[4].lower()
+    # set the name for this entry
+    folderName = str(contentReader.line_num - 1)+'-'+re.sub('[^\w\-_]', '-', row[entryNameField]).lower()
 
-    tags = filter(None, [str(row[5]),str(row[6]),str(row[7])]) # combine tags and filter empty
-    link['tags'] = ', '.join(tags)
+    # make the folder and go there
+    os.makedirs(folderName)
+    os.chdir(folderName)
 
-    refDate = refDate + datetime.timedelta(seconds=60) # increase the time for each link
-    link['date'] = str(refDate.strftime(dateFormat))
+    # create a text file
+    contentFile = open(contentFilename+'.txt', 'w')
 
-    # create folder name with counter and clean title
-    link['folder'] = str(linkReader.line_num - 1)+'-'+re.sub('[^\w\-_]', '-', link['title']).lower()
+    # write the content
+    i = 0
+    for contentSection in row:
+        
+        # rewrite booleans to 0 and 1
+        if contentSection == 'TRUE':
+            contentSection = '1'
+        elif contentSection == 'FALSE':
+            contentSection = '0'
 
-    os.makedirs(link['folder'])
-    os.chdir(link['folder'])
+        # write content
+        contentFile.write(fields[i]+':\n'+contentSection)
+        contentFile.write('\n\n----\n\n')
 
-    linkFile = open('link.txt', 'w')
+        i += 1
 
-    linkFile.write('Title: '+link['title'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Site-url: '+link['url'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Description: '+link['description'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Favorite: '+link['favorite'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Category: '+link['category'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Tags: '+link['tags'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Date: '+refDate.strftime(dateFormat))
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Time: '+refDate.strftime(timeFormat))
+    # add date and time
+    contentFile.write('Date: '+refDate.strftime(dateFormat))
+    contentFile.write('\n\n----\n\n')
+    contentFile.write('Time: '+refDate.strftime(timeFormat))
 
     # go back up one level to create a new folder
     os.chdir('..')
 
+    # increase the date
+    nrDays = postInterval.pop(0)
+    postInterval.append(nrDays)
+    refDate += datetime.timedelta(days=nrDays)
 
-print('- Done with rows')
+print('- Done with the rows')
+print('### FINISHED ###')
