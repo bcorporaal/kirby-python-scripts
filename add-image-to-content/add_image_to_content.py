@@ -1,7 +1,11 @@
+#   add_image_to_content.py
+
 #   Simple script to add images to corresponding kirby content folder
 #   The matching of images and content is done based on the number of the content item
 #   Change the settings in settings.json not in this script
 #   Note that the script is pretty dumb and has no safety checks
+
+#   Tested on macOS 10.13 with Python 3.6 
 
 #   Copyright Bob Corporaal 2017
 #   MIT License
