@@ -36,20 +36,24 @@ inputFile  = open(settings["inputFilename"])
 inputReader = csv.reader(inputFile)
 
 
-## TO DO: use existing folder but start at the next highest number
+print("- Set content folder")
 
-# create the content folder
-# increment the counter until the foldername does not exist yet
-# pretty clumsy way of doing this, but it works
-print("- Make content folder")
-actualFolder = settings["baseFolder"]
-counter      = 0
-while os.path.exists(actualFolder) == True:
-    counter = counter + 1
-    actualFolder = settings["baseFolder"] + "-" + str(counter)
+contentDirectory = settings["baseFolder"]
 
-os.makedirs(actualFolder)
-os.chdir(actualFolder)
+if os.path.exists(contentDirectory) == False:
+    os.makedirs(contentDirectory)
+    startID = int(settings["startID"])
+else:
+    dirContents = os.listdir(contentDirectory)
+
+    # get max number from content entries
+    maxID = max([int(dirName.split("-")[0]) for dirName in dirContents]) + 1
+
+    # use the highest of maxID and the provided startID
+    startID = max(maxID,int(settings["startID"]))
+
+os.chdir(contentDirectory)
+
 
 print("- Get header row fields")
 headerFields = next(inputReader)
