@@ -1,32 +1,56 @@
+#   Simple script to add images to corresponding kirby content folder
+#   The matching of images and content is done based on the number of the content item
+#   Change the settings in settings.json not in this script
+#   Note that the script is pretty dumb and has no safety checks
+
+#   Copyright Bob Corporaal 2017
+#   MIT License
+
+import json
 import os
 import glob
+import re
+import shutil
+from shutil import copy2
 
-contentDirectory = '/Users/bob/Projects/add_thumb_to_data/content/2-links'
-dataFilename     = 'link.txt'
+# read settings file
+settingsFilename = "settings.json"
+
+with open(settingsFilename) as settingsFile:    
+    settings = json.load(settingsFile)
+
+dataFilename = settings["dataFilename"]
 
 print('### START ###')
 
-# loop through contentDirectory
-for folderName, subfolders, filenames in os.walk(contentDirectory):
-    for name in subfolders:
+# get directory contents
+imageList = os.listdir(settings["imageDirectory"])
+contentList = os.listdir(settings["contentDirectory"])
 
-        currentFolder = os.path.join(folderName, name)
-        dataPath      = os.path.join(currentFolder, dataFilename)
-        searchPath    = os.path.join(currentFolder, '*.jpg')
+# loop through image directory
+for imageFilename in imageList:
+    imageNumber = int(re.findall('\d+',imageFilename)[0]) # IMPORTANT ASSUMPTION: first number in the filename is used
 
-        # check if the data file exists here
-        if os.path.exists(dataPath) == True:
+    # match image to content based on the numbers in each
+    for contentDir in contentList:
+        if contentDir.split('-')[0] == str(imageNumber):
 
-            # check for thumb and pick the first one
-            thumbs = glob.glob(searchPath)
-            if thumbs:
-                thumbFilename = os.path.basename(thumbs[0])
-                #print(thumbFilename)
+            # build complete directory paths and copy the image
+            sourcePath = os.path.join(settings["imageDirectory"], imageFilename)
+            destinationPath = os.path.join(settings["contentDirectory"],contentDir, imageFilename)
+            dataPath = os.path.join(settings["contentDirectory"],contentDir, dataFilename)
 
-                dataFile = open(dataPath, 'a')
-                dataFile.write('\n----\n')
-                dataFile.write('Link-image: '+thumbFilename)
-                dataFile.close()
+            try:
+                copy2(sourcePath, destinationPath)
+            except IOError:
+                print("IOError") 
+            
+            # add link to file in data
+            dataFile = open(dataPath, 'a')
+            dataFile.write('\n----\n')
+            dataFile.write(settings["fieldForImage"]+':\n'+imageFilename)
+            dataFile.close()
 
+            print("added "+imageFilename+" to "+contentDir)
 
 print('### END ###')
