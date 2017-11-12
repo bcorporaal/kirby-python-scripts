@@ -1,0 +1,6 @@
+{
+	"imageDirectory": "dummy_content/images",
+	"contentDirectory": "dummy_content/posts",
+	"dataFilename": "post.txt",
+	"fieldForImage":"link_image"
+}

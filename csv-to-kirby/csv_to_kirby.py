@@ -1,75 +1,103 @@
-import csv
-import datetime
+#   csv_to_kirby.py
+
+#   Script to use a create kirby content directories based on a CSV file
+#   Use only on a copy of the content as this script has no safety checks
+#   Change the settings in settings.json not in this script
+
+#   Tested on macOS 10.13 with Python 3.6 and CSV export from Google Sheets
+
+#   Copyright Bob Corporaal 2017
+#   MIT License
+
 import re
 import os
+import json
+import csv
+import datetime
 
-print('### START ###')
+print("### START ###")
 
-linkFile = open('links.csv')
-linkReader = csv.reader(linkFile)
+# base
+dateFormat  = "%Y-%m-%d"
+timeFormat  = "%H:%M"
+maxFolderNameLength = 20
 
-refDate     = datetime.datetime(2017, 2, 5, 10, 20, 0)
-dateFormat  = '%Y-%m-%d'
-timeFormat  = '%H:%M'
+# read settings file
+settingsFilename = "settings.json"
 
-baseFolder = 'content'
-actualFolder = baseFolder
-counter = 0
+with open(settingsFilename) as settingsFile:    
+    settings = json.load(settingsFile)
 
-# increment the counter until the foldername does not exist yet
-# pretty clumsy way of doing this, but it works
-while os.path.exists(actualFolder) == True:
-    counter = counter + 1
-    actualFolder = baseFolder + '-' + str(counter)
+postDate = datetime.datetime.strptime(settings["startDate"], dateFormat+" "+timeFormat)
+startID = settings["startID"]
 
-print('- Make content folder')
-os.makedirs(actualFolder)
-os.chdir(actualFolder)
+print("- Open the input file")
+inputFile  = open(settings["inputFilename"])
+inputReader = csv.reader(inputFile)
 
-print('- Start with rows')
+print("- Set content folder")
 
-for row in linkReader:
-    if linkReader.line_num == 1:
-               continue    # skip first row
-    link = {}
-    link['title']       = row[0]
-    link['url']         = row[1]
-    link['description'] = row[2]
-    link['favorite']    = '1' if row[3].lower() == 'true' else '0'
-    link['category']    = row[4].lower()
+contentDirectory = settings["baseFolder"]
 
-    tags = filter(None, [str(row[5]),str(row[6]),str(row[7])]) # combine tags and filter empty
-    link['tags'] = ', '.join(tags)
+if os.path.exists(contentDirectory) == False:
+    os.makedirs(contentDirectory)
+    startID = int(settings["startID"])
+else:
+    dirContents = os.listdir(contentDirectory)
 
-    refDate = refDate + datetime.timedelta(seconds=60) # increase the time for each link
-    link['date'] = str(refDate.strftime(dateFormat))
+    # get max number from content entries
+    maxID = max([int(dirName.split("-")[0]) for dirName in dirContents]) + 1
 
-    # create folder name with counter and clean title
-    link['folder'] = str(linkReader.line_num - 1)+'-'+re.sub('[^\w\-_]', '-', link['title']).lower()
+    # use the highest of maxID and the provided startID
+    startID = max(maxID,int(settings["startID"]))
 
-    os.makedirs(link['folder'])
-    os.chdir(link['folder'])
+os.chdir(contentDirectory)
 
-    linkFile = open('link.txt', 'w')
+print("- Get header row fields")
+headerFields = next(inputReader)
 
-    linkFile.write('Title: '+link['title'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Site-url: '+link['url'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Description: '+link['description'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Favorite: '+link['favorite'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Category: '+link['category'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Tags: '+link['tags'])
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Date: '+refDate.strftime(dateFormat))
-    linkFile.write('\n\n----\n\n')
-    linkFile.write('Time: '+refDate.strftime(timeFormat))
+print("- Start processing rows")
+for row in inputReader:
+
+    # set the name for this entry
+    baseFolderName = row[settings["fieldForURL"]][0:maxFolderNameLength]
+    folderName = str(inputReader.line_num + startID - 2)+"-"+re.sub("[^\w\-_]", "-", baseFolderName).lower()
+
+    # make the folder and go there
+    os.makedirs(folderName)
+    os.chdir(folderName)
+
+    # create the output file
+    outputFile = open(settings["outputFilename"], "w")
+
+    # write the content
+    i = 0
+    for fieldContent in row:
+        
+        # rewrite booleans to 0 and 1 because that is what Kirby does standard
+        if fieldContent == "TRUE":
+            fieldContent = "1"
+        elif fieldContent == "FALSE":
+            fieldContent = "0"
+
+        # write content
+        outputFile.write(headerFields[i]+":\n"+fieldContent)
+        outputFile.write("\n\n----\n\n")
+
+        i += 1
+
+    # add date and time
+    outputFile.write("Date: "+postDate.strftime(dateFormat))
+    outputFile.write("\n\n----\n\n")
+    outputFile.write("Time: "+postDate.strftime(timeFormat))
 
     # go back up one level to create a new folder
-    os.chdir('..')
+    os.chdir("..")
 
+    # increase the date while looping through the intervals
+    nrDays = settings["postInterval"].pop(0)
+    settings["postInterval"].append(nrDays)
+    postDate += datetime.timedelta(days=nrDays)
 
-print('- Done with rows')
+print("- Done with rows")
+print("### FINISHED ###")
