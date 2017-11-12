@@ -35,7 +35,6 @@ print("- Open the input file")
 inputFile  = open(settings["inputFilename"])
 inputReader = csv.reader(inputFile)
 
-
 print("- Set content folder")
 
 contentDirectory = settings["baseFolder"]
@@ -53,7 +52,6 @@ else:
     startID = max(maxID,int(settings["startID"]))
 
 os.chdir(contentDirectory)
-
 
 print("- Get header row fields")
 headerFields = next(inputReader)
