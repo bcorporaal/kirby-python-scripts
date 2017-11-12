@@ -5,5 +5,5 @@
 	"startID": 20,
 	"startDate": "2017-11-10 14:45",
 	"postInterval":[1,2,3],
-	"fieldForSlug":0
+	"fieldForURL":0
 }
