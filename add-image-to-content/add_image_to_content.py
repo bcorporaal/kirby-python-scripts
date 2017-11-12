@@ -10,6 +10,9 @@
 #   Copyright Bob Corporaal 2017
 #   MIT License
 
+#   TO DO
+#   - Change existing link to image if there is already one present. Avoid duplicates
+
 import json
 import os
 import glob
