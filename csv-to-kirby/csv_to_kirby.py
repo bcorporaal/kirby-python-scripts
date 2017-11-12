@@ -24,6 +24,9 @@ print("- Open the input file")
 inputFile  = open(settings["inputFilename"])
 inputReader = csv.reader(inputFile)
 
+
+## TO DO: use existing folder but start at the next highest number
+
 # create the content folder
 # increment the counter until the foldername does not exist yet
 # pretty clumsy way of doing this, but it works
