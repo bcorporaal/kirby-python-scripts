@@ -1,3 +1,14 @@
+#   csv_to_kirby.py
+
+#   Script to use a create kirby content directories based on a CSV file
+#   Use only on a copy of the content as this script has no safety checks
+#   Change the settings in settings.json not in this script
+
+#   Tested on macOS 10.13 with Python 3.6 and CSV export from Google Sheets
+
+#   Copyright Bob Corporaal 2017
+#   MIT License
+
 import re
 import os
 import json
