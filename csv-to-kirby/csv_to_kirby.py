@@ -17,7 +17,6 @@ settingsFilename = "settings.json"
 with open(settingsFilename) as settingsFile:    
     settings = json.load(settingsFile)
 
-
 postDate = datetime.datetime.strptime(settings["startDate"], dateFormat+" "+timeFormat)
 startID = settings["startID"]
 
@@ -41,11 +40,11 @@ os.chdir(actualFolder)
 print("- Get header row fields")
 headerFields = next(inputReader)
 
-print("- Start with rows")
+print("- Start processing rows")
 for row in inputReader:
 
     # set the name for this entry
-    baseFolderName = row[settings["fieldForSlug"]][0:maxFolderNameLength]
+    baseFolderName = row[settings["fieldForURL"]][0:maxFolderNameLength]
     folderName = str(inputReader.line_num + startID - 2)+"-"+re.sub("[^\w\-_]", "-", baseFolderName).lower()
 
     # make the folder and go there
@@ -57,16 +56,16 @@ for row in inputReader:
 
     # write the content
     i = 0
-    for contentSection in row:
+    for fieldContent in row:
         
         # rewrite booleans to 0 and 1 because that is what Kirby does standard
-        if contentSection == "TRUE":
-            contentSection = "1"
-        elif contentSection == "FALSE":
-            contentSection = "0"
+        if fieldContent == "TRUE":
+            fieldContent = "1"
+        elif fieldContent == "FALSE":
+            fieldContent = "0"
 
         # write content
-        outputFile.write(headerFields[i]+":\n"+contentSection)
+        outputFile.write(headerFields[i]+":\n"+fieldContent)
         outputFile.write("\n\n----\n\n")
 
         i += 1
@@ -84,5 +83,5 @@ for row in inputReader:
     settings["postInterval"].append(nrDays)
     postDate += datetime.timedelta(days=nrDays)
 
-print("- Done with the rows")
+print("- Done with rows")
 print("### FINISHED ###")
