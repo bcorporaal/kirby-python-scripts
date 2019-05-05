@@ -10,10 +10,6 @@
 
 import json
 import os
-import glob
-import re
-import shutil
-from shutil import copy2
 from random import shuffle
 
 # read settings file
