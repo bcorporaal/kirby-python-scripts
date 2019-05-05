@@ -61,7 +61,7 @@ for row in inputReader:
 
     # set the name for this entry
     baseFolderName = row[settings["fieldForURL"]][0:maxFolderNameLength]
-    folderName = str(inputReader.line_num + startID - 2)+"-"+re.sub("[^\w\-_]", "-", baseFolderName).lower()
+    folderName = str(inputReader.line_num + startID - 2)+"-"+re.sub("[^\w\-_]", "_", baseFolderName).lower()
 
     # make the folder and go there
     os.makedirs(folderName)
