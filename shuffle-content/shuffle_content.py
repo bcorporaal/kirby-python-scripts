@@ -23,11 +23,13 @@ with open(settingsFilename) as settingsFile:
     settings = json.load(settingsFile)
 
 contentDirectory = settings["contentDirectory"]
-
+contentList = []
 print('### START ###')
 
-# get directory contents
-contentList = os.listdir(settings["contentDirectory"])
+# get directory contents with just directories
+for filename in os.listdir(contentDirectory):
+    if os.path.isdir(os.path.join(contentDirectory,filename)):
+        contentList.append(filename)
 
 print('Old directory')
 print(contentList)
@@ -46,6 +48,7 @@ for newContentName, contentName in zip(newContentList, contentList):
     os.rename(os.path.join(contentDirectory, contentName), os.path.join(contentDirectory, newContentName))
 
 print('New directory')
-print(os.listdir(settings["contentDirectory"]))
+print(newContentList)
 
 print('### END ###')
+
